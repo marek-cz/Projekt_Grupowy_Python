@@ -15,8 +15,12 @@ def wyodrebnij_osie_danych(lista):
     return result
 
 def normalizuj(x): # dokladniej standaryzacja - wartosc srednia 0 i odchylenie standardowe 1
-    x -= x.mean()
-    x /= x.std()
+    srednie = x.mean(axis=1)
+    for i in range(x.shape[0]):
+        x[i] -= srednie[i]
+    odchylenia_std = x.std(axis=1)
+    for i in range(x.shape[0]):
+        x[i] /= odchylenia_std[i]
 #################################################################################################
 import socket
 import numpy as np
@@ -62,6 +66,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if ramka_danych_lista_stringow[0] == "Klasyfikacja" : # zakladana ramka : [Klasyfikacja][ID_ZAWODNIKA][DANE]
             dane_osie = wyodrebnij_osie_danych(ramka_danych_lista_stringow[2:])
             probka = np.asarray(dane_osie).astype('float32')
+            normalizuj(probka)
             shape = probka.shape
             probka = probka.reshape(1,shape[0]*shape[1])
             klasyfikacja = model.predict(probka)
