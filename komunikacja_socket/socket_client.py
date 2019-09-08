@@ -86,11 +86,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         if decyzja :
             probka_danych = []
-            do_nadania = ""
+            do_nadania = "Klasyfikacja " + input("Podaj ID zawodnika: \n") # Klasyfikuj aktywnosc zawodnika o zadanym ID 
             for i in range(fs * klasyfikuj_co_n_s):
                 probka_danych.append(dane_ack[i + (licznik * fs * klasyfikuj_co_n_s )])
                 probka_danych.append(dane_gyr[i + (licznik * fs * klasyfikuj_co_n_s )])
-                do_nadania = do_nadania + " " + " ".join(probka_danych[2*i]) + " " + " ".j$
+                do_nadania = do_nadania + " " + " ".join(probka_danych[2*i]) + " " + " ".join(probka_danych[(2*i) + 1])
 
             licznik = licznik+1
             if licznik == (len(dane_ack)//fs) : licznik = 0
