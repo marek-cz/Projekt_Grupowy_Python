@@ -1,7 +1,7 @@
 # KOMUNIKACJA KLIENT - SERWER
 # PROCES KLIENTA
 
-fs = 2
+fs = 52
 klasyfikuj_co_n_s = 1
 
 import socket
@@ -29,11 +29,12 @@ def wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_csv, offset ):
                 linia_tokeny = linia.split(',') # dzielimy stringa po ','
                 wartosci = linia_tokeny[-6:-5] + linia_tokeny[-4:-1] # [-6] Node Timestamp
                 lista_na_dane.append(wartosci)# dane o ksztalcie (shape) np.(1243,3)
-        lista_na_dane.sort() # sortujemy po Timestamp'ie
+       # lista_na_dane.sort() # sortujemy po Timestamp'ie
         
-        for i in range(len(lista_na_dane)): # usuwamy Timestamp z rezultatu
-            result.append(lista_na_dane[i][1:])
-    return result
+        #for i in range(len(lista_na_dane)): # usuwamy Timestamp z rezultatu
+        #    result.append(lista_na_dane[i][1:])
+    #return result
+    return lista_na_dane
 
 
 def usun_ostatnie_N_rekordow(lista,N):
@@ -55,12 +56,20 @@ def polacz_liste_w_1D(lista):
         result.append(lista[i][0] +" " + lista[i][1]+ " " + lista[i][2])
     return result
 
-lista_akc_bieganie = wczytaj_dane_z_pliku_csv_Timestamp("Bieg1_Accelerometer.csv",5)
-lista_gyr_bieganie = wczytaj_dane_z_pliku_csv_Timestamp("Bieg1_Gyroscope.csv",5)
-lista_akc_trucht = wczytaj_dane_z_pliku_csv_Timestamp("Trucht3_Accelerometer.csv",5)
-lista_gyr_trucht = wczytaj_dane_z_pliku_csv_Timestamp("Trucht3_Gyroscope.csv",5)
+def usun_timestamp(lista_probek_timestamp):
+    result = []
+    for probka in lista_probek_timestamp:
+        result.append(probka[1:])
+    return result
 
-usun_ostatnie_N_rekordow(lista_gyr_bieganie,1)
+#############################################################################################
+
+lista_akc_bieganie = wczytaj_dane_z_pliku_csv_Timestamp("Bieg1_Accelerometer.csv",5)
+lista_gyr_bieganie = usun_timestamp( wczytaj_dane_z_pliku_csv_Timestamp("Bieg1_Gyroscope.csv",5) )
+lista_akc_trucht   = wczytaj_dane_z_pliku_csv_Timestamp("Trucht3_Accelerometer.csv",5)
+lista_gyr_trucht   = usun_timestamp( wczytaj_dane_z_pliku_csv_Timestamp("Trucht3_Gyroscope.csv",5) )
+
+#usun_ostatnie_N_rekordow(lista_gyr_bieganie,1)# usune 1 linie z pliku...
 dopasuj_rozmiar_listy(lista_akc_bieganie)
 dopasuj_rozmiar_listy(lista_gyr_bieganie)
 dopasuj_rozmiar_listy(lista_akc_trucht)

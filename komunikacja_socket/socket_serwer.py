@@ -4,13 +4,13 @@
 ###############################################################################################
 def wyodrebnij_osie_danych(lista):
     result = [[],[],[],[],[],[]]
-    for i in range (len(lista)//6):
-        result[0].append(lista[6*i + 0]) # AKCELEROMETR X
-        result[1].append(lista[6*i + 1]) # AKCELEROMETR Y
-        result[2].append(lista[6*i + 2]) # AKCELEROMETR Z
-        result[3].append(lista[6*i + 3]) # ZYROSKOP X
-        result[4].append(lista[6*i + 4]) # ZYROSKOP Y
-        result[5].append(lista[6*i + 5]) # ZYROSKOP Z
+    for probka in lista:
+        result[0].append(probka[0]) # AKCELEROMETR X
+        result[1].append(probka[1]) # AKCELEROMETR Y
+        result[2].append(probka[2]) # AKCELEROMETR Z
+        result[3].append(probka[3]) # ZYROSKOP X
+        result[4].append(probka[4]) # ZYROSKOP Y
+        result[5].append(probka[5]) # ZYROSKOP Z
 
     return result
 
@@ -21,6 +21,29 @@ def normalizuj(x): # dokladniej standaryzacja - wartosc srednia 0 i odchylenie s
     odchylenia_std = x.std(axis=1)
     for i in range(x.shape[0]):
         x[i] /= odchylenia_std[i]
+
+def lista_stringow_na_liste_probek(lista_stringow):
+    result = []
+    rekord = []
+    licznik = 0
+    for string in lista_stringow:
+        #napis = str(licznik) + ". String : " + str(string)
+        rekord.append(string)
+        #print(napis)
+        licznik += 1
+        if licznik == 7 :
+            licznik = 0
+            result.append(rekord)
+            rekord = []
+            #print(result)
+
+    return result
+
+def usun_timestamp(lista_probek_timestamp):
+    result = []
+    for probka in lista_probek_timestamp:
+        result.append(probka[1:])
+    return result
 #################################################################################################
 import socket
 import numpy as np
@@ -60,11 +83,17 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print('Odebralem dane : \n', ramka_danych_string)
         print("\n\n")
 
-        ramka_danych_lista_stringow = ramka_danych_string.split()
+        ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
         # w zaleznosci od typu ramki - DO USTALENIA NA SPOTKANIU!!!! - realizujemy odpowiedznie operacje
         
         if ramka_danych_lista_stringow[0] == "Klasyfikacja" : # zakladana ramka : [Klasyfikacja][ID_ZAWODNIKA][DANE]
-            dane_osie = wyodrebnij_osie_danych(ramka_danych_lista_stringow[2:])
+            # [DANE] = [Timestamp][a_x][a_y][a_z][g_x][g_y][g_z] x Liczba_probek_w_paczce
+            lista_probek_timestamp = lista_stringow_na_liste_probek(ramka_danych_lista_stringow[2:])
+            lista_probek_timestamp.sort() # sortujemy po Timestamp
+            lista_posortowanych_probek = usun_timestamp(lista_probek_timestamp) # usuwamy timestamp
+            
+            dane_osie = wyodrebnij_osie_danych(lista_posortowanych_probek) # podzial probek na osie czujnikow
+            
             probka = np.asarray(dane_osie).astype('float32')
             normalizuj(probka)
             shape = probka.shape
@@ -73,7 +102,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             indeks_np = np.where(klasyfikacja == klasyfikacja.max()) # szukamy najbardziej prawdopodobnego wyniku
             indeks = np.asscalar(indeks_np[1])
             # odeslij wynik klasyfikacji
-            odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"
+            odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"  + str(klasyfikacja) + "\n"
             connection.send(odpowiedz.encode())
             # wpisz do bazy danych
             kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
