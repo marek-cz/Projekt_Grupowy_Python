@@ -4,6 +4,7 @@ plik_bazy_danych.db
 dane/przykladowe/*.npy
 dane/przykladowe/*.csv
 dane/przykladowe/*.png
+dane/przykladowe/__pycache__
 dane/przykladowe/wczytanie_danych_backup.py
 dane/przykladowe/wczytanie_danych_marsz_trucht_bieg.py
 dane/przykladowe/wczytanie_danych_marsz_trucht.py
