@@ -16,3 +16,6 @@ komunikacja_socket/*.txt
 komunikacja_socket/serwer_echo.py
 komunikacja_socket/socket_client_1_komunikat.py
 komunikacja_socket/socket_client_petla.py
+
+dane/obrobka_danych_TIMESTAMP/*.csv
+dane/obrobka_danych_TIMESTAMP/nowe_pliki_csv
