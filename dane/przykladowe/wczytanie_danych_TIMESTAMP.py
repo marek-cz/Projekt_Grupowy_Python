@@ -1,10 +1,10 @@
 # WCZYTANIE DANYCH Z PLIKU
 import numpy as np
 import matplotlib.pyplot as plt
-plik_akcelerometr = "Accelerometer.csv"
-plik_zyroskop = "Gyroscope.csv"
-dane_akcelerometr = []
-dane_zyroskop = []
+#plik_akcelerometr = "Accelerometer.csv"
+#plik_zyroskop = "Gyroscope.csv"
+#dane_akcelerometr = []
+#dane_zyroskop = []
 offset = 4
 
 #normalizacja = False
@@ -100,14 +100,10 @@ def ustaw_w_losowej_kolejnosci(kolejnosc,tablica_oryginalna, tablica_docelowa,li
     
 ################################################################################################
 
-dane_akcelerometr = wczytaj_dane_z_pliku_csv(plik_akcelerometr,offset,1.)
-dane_zyroskop = wczytaj_dane_z_pliku_csv(plik_zyroskop,offset,1.)
-
 
 
 bieg1_akc = wczytaj_dane_z_pliku_csv_Timestamp('Bieg1_Accelerometer.csv',offset,bieg)         # 311 - nic nie usuwac
 bieg1_gyr = wczytaj_dane_z_pliku_csv_Timestamp('Bieg1_Gyroscope.csv',offset,bieg)             # 312
-usun_ostatnie_N_rekordow(bieg1_gyr,1)
 dopasuj_rozmiar_listy(bieg1_akc)
 dopasuj_rozmiar_listy(bieg1_gyr)
 
@@ -118,7 +114,6 @@ dopasuj_rozmiar_listy(bieg2_akc)    # 7384
 dopasuj_rozmiar_listy(bieg2_gyr)    # 7384
 
 marsz1_akc = wczytaj_dane_z_pliku_csv_Timestamp('Marsz1_Accelerometer.csv',offset,marsz)      # 727 - nie usuwac, tylko wyrownac
-usun_ostatnie_N_rekordow(marsz1_akc,1)
 marsz1_gyr = wczytaj_dane_z_pliku_csv_Timestamp('Marsz1_Gyroscope.csv',offset,marsz)          # 726
 dopasuj_rozmiar_listy(marsz1_akc)
 dopasuj_rozmiar_listy(marsz1_gyr)
@@ -134,7 +129,6 @@ dopasuj_rozmiar_listy(marsz3_akc)
 dopasuj_rozmiar_listy(marsz3_gyr)
 
 trucht1_akc = wczytaj_dane_z_pliku_csv_Timestamp('Trucht1_Accelerometer.csv',offset,trucht)   # 1318
-usun_ostatnie_N_rekordow(trucht1_akc,1)
 trucht1_gyr = wczytaj_dane_z_pliku_csv_Timestamp('Trucht1_Gyroscope.csv',offset,trucht)       # 1317
 dopasuj_rozmiar_listy(trucht1_akc)
 dopasuj_rozmiar_listy(trucht1_gyr)
@@ -145,7 +139,6 @@ dopasuj_rozmiar_listy(trucht2_akc)
 dopasuj_rozmiar_listy(trucht2_gyr)
 
 trucht3_akc = wczytaj_dane_z_pliku_csv_Timestamp('Trucht3_Accelerometer.csv',offset,trucht)   # 28398
-usun_ostatnie_N_rekordow(trucht3_akc,1)
 trucht3_gyr = wczytaj_dane_z_pliku_csv_Timestamp('Trucht3_Gyroscope.csv',offset,trucht)       # 28397
 dopasuj_rozmiar_listy(trucht3_akc)
 dopasuj_rozmiar_listy(trucht3_gyr)
