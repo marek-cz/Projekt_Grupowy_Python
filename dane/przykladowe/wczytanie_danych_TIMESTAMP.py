@@ -1,13 +1,8 @@
 # WCZYTANIE DANYCH Z PLIKU
 import numpy as np
 import matplotlib.pyplot as plt
-#plik_akcelerometr = "Accelerometer.csv"
-#plik_zyroskop = "Gyroscope.csv"
-#dane_akcelerometr = []
-#dane_zyroskop = []
 offset = 4
 
-#normalizacja = False
 normalizacja = True
 
 ##############################################################################################
