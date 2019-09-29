@@ -1,6 +1,7 @@
 # WCZYTANIE DANYCH Z PLIKU
 import numpy as np
 import matplotlib.pyplot as plt
+import os # biblioteka do poruszania sie w systemie plikow
 offset = 4
 
 normalizacja = True
@@ -145,8 +146,8 @@ dopasuj_rozmiar_listy(trucht4_gyr)
 
 # LACZENIE DANYCH Z ROZNYCH PLIKOW :
 
-dane_akcelerometr = marsz1_akc + trucht2_akc + trucht1_akc + marsz2_akc + marsz3_akc  +bieg1_akc + bieg2_akc + trucht3_akc + trucht4_akc
-dane_zyroskop     = marsz1_gyr + trucht1_gyr + trucht2_gyr +marsz2_gyr + marsz3_gyr  + bieg1_gyr + bieg2_gyr + trucht3_gyr + trucht4_gyr
+dane_akcelerometr = marsz1_akc + trucht2_akc + trucht1_akc + marsz2_akc + marsz3_akc  + bieg1_akc + bieg2_akc + trucht3_akc + trucht4_akc
+dane_zyroskop     = marsz1_gyr + trucht2_gyr + trucht1_gyr + marsz2_gyr + marsz3_gyr  + bieg1_gyr + bieg2_gyr + trucht3_gyr + trucht4_gyr
 
 
 # PRZEKSZTALCENIE DANYCH ZE STRINGOW NA LICZBY
