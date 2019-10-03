@@ -49,8 +49,8 @@ from keras import layers
 
 # DEFINICJA MODELU
 model = models.Sequential()
-model.add(layers.Dense(wymiar_warstw,activation='relu', input_shape=(shape[1],)))
-model.add(layers.Dense(32,activation='relu'))
+model.add(layers.Dense(4 * wymiar_warstw,activation='relu', input_shape=(shape[1],)))
+model.add(layers.Dense(2 * wymiar_warstw,activation='relu'))
 model.add(layers.Dense(liczba_kategorii,activation='softmax')) # na kazdym wyjsciu prawdopodobienstwo ze element nalezy do danej klasy
 
 # KOMPILOWANIE MODELU
