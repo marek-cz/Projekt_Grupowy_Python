@@ -2,25 +2,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import funkcje # wlasny modul z funkcjami
-offset = 4
 
-normalizacja = True
+normalizacja = True  # Gdy False dane nie sa normalizowane
 
 ##############################################################################################
-fs = 52 # Hz
-klasyfikuj_co_n_s = 1 # co ile chcemy klasyfikowac
+liczba_probek_w_paczce = int(input("Podaj liczbe probek w paczce danych : "))
 ##############################################################################################
 #       ETYKIETY DANYCH :
-marsz = 0
-trucht = 1
-bieg = 2
+#marsz = 0
+#trucht = 1
+#bieg = 2
+slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 }
 ################################################################################################
 
 
-#dane_akcelerometr = marsz1_akc + trucht2_akc + trucht1_akc + marsz2_akc + marsz3_akc  + bieg1_akc + bieg2_akc + trucht3_akc + trucht4_akc
-#dane_zyroskop     = marsz1_gyr + trucht2_gyr + trucht1_gyr + marsz2_gyr + marsz3_gyr  + bieg1_gyr + bieg2_gyr + trucht3_gyr + trucht4_gyr
-
-(dane_akcelerometr , dane_zyroskop) = funkcje.wczytaj_dane_z_plikow() # wczytuje dane z plikow csv w folderze roboczym
+(dane_akcelerometr , dane_zyroskop) = funkcje.wczytaj_dane_z_plikow(liczba_probek_w_paczce, slownik_etykiet_danych) # wczytuje dane z plikow csv w folderze roboczym
 
 # PRZEKSZTALCENIE DANYCH ZE STRINGOW NA LICZBY
 
@@ -43,21 +39,22 @@ if normalizacja :
     funkcje.normalizuj(zyroskop_z)
 
 
-liczba_probek = len(dane_akcelerometr) // (klasyfikuj_co_n_s * fs)
+liczba_probek = len(dane_akcelerometr) // liczba_probek_w_paczce
 
 etykiety = np.zeros((liczba_probek,))
-dane = np.zeros((liczba_probek,6,klasyfikuj_co_n_s * fs))
+dane = np.zeros((liczba_probek,6,liczba_probek_w_paczce))
 
 licznik = 0
 while(licznik < liczba_probek):
-    dane[licznik][0] = akcelerometr_x[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
-    dane[licznik][1] = akcelerometr_y[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
-    dane[licznik][2] = akcelerometr_z[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
-    dane[licznik][3] = zyroskop_x[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
-    dane[licznik][4] = zyroskop_y[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
-    dane[licznik][5] = zyroskop_z[licznik *klasyfikuj_co_n_s * fs : (licznik + 1)*klasyfikuj_co_n_s * fs]
+    dane[licznik][0] = akcelerometr_x[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
+    dane[licznik][1] = akcelerometr_y[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
+    dane[licznik][2] = akcelerometr_z[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
+    
+    dane[licznik][3] = zyroskop_x[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
+    dane[licznik][4] = zyroskop_y[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
+    dane[licznik][5] = zyroskop_z[licznik * liczba_probek_w_paczce : (licznik + 1) * liczba_probek_w_paczce]
     #print('Licznik : ',licznik,'\n')
-    etykiety[licznik] = dane_akcelerometr[licznik *klasyfikuj_co_n_s * fs][3]
+    etykiety[licznik] = dane_akcelerometr[licznik *liczba_probek_w_paczce][3]
     licznik += 1
 
 # LOSOWANIE KOLEJNOSCI PROBEK
@@ -66,7 +63,7 @@ kolejnosc = np.arange(0,liczba_probek,1)
 np.random.shuffle(kolejnosc)
 
 labels = np.zeros((liczba_probek,))
-data = np.zeros((liczba_probek,6,klasyfikuj_co_n_s * fs))
+data = np.zeros((liczba_probek,6,liczba_probek_w_paczce))
 funkcje.ustaw_w_losowej_kolejnosci(kolejnosc,etykiety,labels,liczba_probek)
 funkcje.ustaw_w_losowej_kolejnosci(kolejnosc,dane, data, liczba_probek)
 
