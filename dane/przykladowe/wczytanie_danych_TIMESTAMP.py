@@ -3,15 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import funkcje # wlasny modul z funkcjami
 
-normalizacja = True  # Gdy False dane nie sa normalizowane
 
 ##############################################################################################
 liczba_probek_w_paczce = int(input("Podaj liczbe probek w paczce danych : "))
 ##############################################################################################
 #       ETYKIETY DANYCH :
-#marsz = 0
-#trucht = 1
-#bieg = 2
 slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 }
 ################################################################################################
 
@@ -28,16 +24,7 @@ zyroskop_x = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,0)).astype
 zyroskop_y = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,1)).astype('float32')
 zyroskop_z = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,2)).astype('float32')
 
-
-# NORMALIZACJA ???
-if normalizacja :
-    funkcje.normalizuj(akcelerometr_x)
-    funkcje.normalizuj(akcelerometr_y)
-    funkcje.normalizuj(akcelerometr_z)
-    funkcje.normalizuj(zyroskop_x)
-    funkcje.normalizuj(zyroskop_y)
-    funkcje.normalizuj(zyroskop_z)
-
+##########################################################################################################################################
 
 liczba_probek = len(dane_akcelerometr) // liczba_probek_w_paczce
 
