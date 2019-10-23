@@ -49,7 +49,7 @@ from keras import layers
 
 # DEFINICJA MODELU
 model = models.Sequential()
-model.add(layers.Dense(4 * wymiar_warstw,activation='relu', input_shape=(shape[1],)))
+model.add(layers.Dense(4 * wymiar_warstw,activation='relu', input_shape=(shape[1],))) # wejscie warstwy ma ksztalt (batch_size,shape[1]), a wyjscie (batch_size,4*wymiar...)
 model.add(layers.Dense(2 * wymiar_warstw,activation='relu'))
 model.add(layers.Dense(liczba_kategorii,activation='softmax')) # na kazdym wyjsciu prawdopodobienstwo ze element nalezy do danej klasy
 
@@ -59,7 +59,8 @@ model.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accu
 
 # TRENOWANIE MODELU
 
-historia_treningu = model.fit(dane_treningowe, etykiety_treningowe, epochs = liczba_epok, batch_size = 52, validation_data=(dane_walidacyjne, etykiety_walidacyjne))
+historia_treningu = model.fit(dane_treningowe, etykiety_treningowe, epochs = liczba_epok, batch_size = 52,
+                              validation_data=(dane_walidacyjne, etykiety_walidacyjne))
 
 # WYNIKI
 
