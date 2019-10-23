@@ -2,7 +2,6 @@
     zawiera funkcje wykorzystywane w tym skrypcie"""
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 ##############################################################################################
@@ -12,6 +11,7 @@ def wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_csv, etykieta, offset=4 ):
         Parametr offset ma domyslna wartosc i okresla ile linii
         poczatkowych pliku csv jets pomijanych."""
     lista_na_dane = []
+    timestamp = []
     result = []
     with open(nazwa_pliku_csv,"r") as plik :
         licznik_linii = 0
@@ -20,13 +20,15 @@ def wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_csv, etykieta, offset=4 ):
             if licznik_linii > offset :
                 linia_tokeny = linia.split(',') # dzielimy stringa po ','
                 wartosci = linia_tokeny[-6:-5] + linia_tokeny[-4:-1] # [-6] Node Timestamp
+                timestamp.append(linia_tokeny[-6:-5])
                 wartosci.append(etykieta)
                 lista_na_dane.append(wartosci)
         lista_na_dane.sort() # sortujemy po Timestamp'ie
-        
+        timestamp.sort()
         for i in range(len(lista_na_dane)): # usuwamy Timestamp z rezultatu
-            result.append(lista_na_dane[i][1:])
-    return result
+            result.append(lista_na_dane[i][1:]) # od 1 bo na indeksie 0 jets Timestamp    
+    
+    return (result,timestamp)
 
 # with -> zapewnia zamkniecie pliku w przypadku bledu
 
@@ -49,19 +51,27 @@ def normalizuj(x): # dokladniej standaryzacja - wartosc srednia 0 i odchylenie s
     x -= x.mean()
     x /= x.std()
 
-def rysuj_wykres(tablica_danych, fs,label,x_label,y_label):
-    Ts = 1/fs
-    t=np.arange(0,Ts*len(tablica_danych),Ts)
-    plt.plot(t,tablica_danych,'b',label=label)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.legend()
-    plt.show()
+def normalizuj_tablice_2D_po_osiach(tablica):
+    """Normalizuje kazdy wiersz tablicy 2D """
+    liczba_wierszy = len(tablica)
+    # wydobywamy osie
+    x = np.asarray(wyodrebnij_os_z_tablicy(tablica,0)).astype('float32')
+    y = np.asarray(wyodrebnij_os_z_tablicy(tablica,1)).astype('float32')
+    z = np.asarray(wyodrebnij_os_z_tablicy(tablica,2)).astype('float32')
+
+    # normalizacja po osiach
+    normalizuj(x)
+    normalizuj(y)
+    normalizuj(z)
+    # skladamy znowu razem z etykietami
+    for i in range(liczba_wierszy):
+        tablica[i] = [x[i],y[i],z[i],tablica[i][3]] # tablica[i][3] - ETYKIETA
+
 
 def usun_ostatnie_N_rekordow(lista,N):
     licznik = 1
     while(licznik <= N):
-        del(lista[(-1) * licznik])
+        del(lista[(-1)])
         licznik += 1
 
 def dopasuj_rozmiar_listy(lista, liczba_probek_w_paczce):
@@ -118,6 +128,11 @@ def wczytaj_dane_z_plikow(liczba_probek_w_paczce, slownik_etykiet_danych):
                     # DOPASUJ ROZMIAR
                     dopasuj_rozmiar_listy(lista_tmp_akc,liczba_probek_w_paczce)
                     dopasuj_rozmiar_listy(lista_tmp_gyr,liczba_probek_w_paczce)
+
+                    # NORMALIZACJA
+                    normalizuj_tablice_2D_po_osiach(lista_tmp_akc)
+                    normalizuj_tablice_2D_po_osiach(lista_tmp_gyr)
+                    
                     # DODAJ DO BUFORA
                     lista_akc += lista_tmp_akc
                     lista_gyr += lista_tmp_gyr
