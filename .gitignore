@@ -8,6 +8,7 @@ dane/przykladowe/wczytanie_danych_backup.py
 dane/przykladowe/wczytanie_danych_marsz_trucht_bieg.py
 dane/przykladowe/wczytanie_danych_marsz_trucht.py
 dane/przykladowe/klasyfikacja_marsz_trucht_walidacja_k_krzyzowa.py
+dane/przykladowe/wykresy/
 
 dane/przykladowe/klasyfikacja_marsz_trucht.py
 deep_learning_python/
