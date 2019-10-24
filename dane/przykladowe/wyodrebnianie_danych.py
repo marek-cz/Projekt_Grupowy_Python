@@ -20,6 +20,20 @@ def rysuj_wykres(czas,tablica_danych,y_label,label = 'dane',x_label = 'timestamp
     plt.legend()
     plt.show()
 
+def FFT_sygnalu(sygnal,Fs = 100):
+    n = len(sygnal) # length of the signal
+    k = np.arange(n)
+    T = n/Fs
+    frq = k/T # two sides frequency range
+
+    frq = frq[range(int(n/2))] # one side frequency range
+
+    Y = np.fft.fft(sygnal)/n # fft computing and normalization
+    Y = Y[range(int(n/2))]
+
+    return (Y,frq)
+
+
 def usun_dane_z_przedzialu(od,do,lista):
     del(lista[od:do])
 
@@ -27,46 +41,91 @@ def wykresy_timestamp(czas,dane):
     os_x = f.wyodrebnij_os_z_tablicy(dane,0)
     os_y = f.wyodrebnij_os_z_tablicy(dane,1)
     os_z = f.wyodrebnij_os_z_tablicy(dane,2)
-    warunek = True
-    while (warunek):
-        decyzja = input("Wybierz os: \nx\ny\nz\n")
-        if decyzja =='x':
-            rysuj_wykres(czas,os_x,"x")
-        elif decyzja =='y':
-            rysuj_wykres(czas,os_y,"y")
-        elif decyzja =='z' :
-            rysuj_wykres(czas,os_y,"z")
-        else :
-            print("Powtorz wybor osi")
-            break
 
-def wykresy_probki(dane):
+    fig, ax = plt.subplots(3, 2)
+    ax[0,0].plot(czas,os_x,'b')
+    ax[0,0].set_xlabel('Czas [ms]')
+    ax[0,0].set_ylabel('OS X')
+    ax[0,0].set_title('f(t)')
+    ax[1,0].plot(czas,os_y,'r') 
+    ax[1,0].set_xlabel('Czas [ms]')
+    ax[1,0].set_ylabel('OS Y')
+    ax[2,0].plot(czas,os_z,'g') 
+    ax[2,0].set_xlabel('Czas [ms]')
+    ax[2,0].set_ylabel('OS Z')
+    
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_x)
+    ax[0,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'b')
+    ax[0,1].set_xlabel('f')
+    ax[0,1].set_ylabel('OS X')
+    ax[0,1].set_title('FFT - bez DC')
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_y)
+    ax[1,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'r') 
+    ax[1,1].set_xlabel('f')
+    ax[1,1].set_ylabel('OS Y')
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_y)
+    ax[2,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'g') 
+    ax[2,1].set_xlabel('f')
+    ax[2,1].set_ylabel('OS Z')
+
+
+    plt.show()
+
+
+def wykresy_probki(dane,ile_probek = -1):
     os_x = f.wyodrebnij_os_z_tablicy(dane,0)
     os_y = f.wyodrebnij_os_z_tablicy(dane,1)
     os_z = f.wyodrebnij_os_z_tablicy(dane,2)
-    warunek = True
-    while (warunek):
-        decyzja = input("Wybierz os: \nx\ny\nz\n")
-        if decyzja =='x':
-            rysuj_wykres(list(range(len(os_x))),os_x,"x",x_label = 'probka')
-        elif decyzja =='y':
-            rysuj_wykres(list(range(len(os_x))),os_y,"y",x_label = 'probka')
-        elif decyzja =='z' :
-            rysuj_wykres(list(range(len(os_x))),os_y,"z",x_label = 'probka')
-        else :
-            print("Powtorz wybor osi")
-            break
+
+    indeks_poczatkowy = 0
+    indeks_koncowy = len(os_x)
+    
+    liczba_probek = list(range(len(os_x)))
+    if ile_probek != -1 :
+        srodek = len(liczba_probek) //2
+        liczba_probek = liczba_probek[srodek : srodek + ile_probek]
+        indeks_poczatkowy = srodek
+        indeks_koncowy = srodek + ile_probek
+    
+    fig, ax = plt.subplots(3, 2)
+    ax[0,0].plot(liczba_probek,os_x[indeks_poczatkowy : indeks_koncowy],'b')
+    ax[0,0].set_xlabel('Probka')
+    ax[0,0].set_ylabel('OS X')
+    ax[0,0].set_title('f(t)')
+    ax[1,0].plot(liczba_probek,os_y[indeks_poczatkowy : indeks_koncowy],'r') 
+    ax[1,0].set_xlabel('Probka')
+    ax[1,0].set_ylabel('OS Y')
+    ax[2,0].plot(liczba_probek,os_z[indeks_poczatkowy : indeks_koncowy],'g') 
+    ax[2,0].set_xlabel('Probka')
+    ax[2,0].set_ylabel('OS Z')
+    
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_x)
+    ax[0,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'b')
+    ax[0,1].set_xlabel('f')
+    ax[0,1].set_ylabel('OS X')
+    ax[0,1].set_title('FFT - bez DC')
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_y)
+    ax[1,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'r') 
+    ax[1,1].set_xlabel('f')
+    ax[1,1].set_ylabel('OS Y')
+    (fft_sygnalu,czestotliwosc) = FFT_sygnalu(os_y)
+    ax[2,1].plot(czestotliwosc[1:],abs(fft_sygnalu[1:]),'g') 
+    ax[2,1].set_xlabel('f')
+    ax[2,1].set_ylabel('OS Z')
+
+    plt.show()
 
 def wykresy(decyzja,czas,dane):
     while(True):
         print("WYKRESY:\n")
-        decyzja = input("1.TIMESTAMP\n2.NUMER PROBKI\nELSE - wyjscie\n")
+        decyzja = input("1.TIMESTAMP\n2.NUMER PROBKI\n3.N srodkowych probek \nELSE - wyjscie\n")
         if decyzja == '1' :
             wykresy_timestamp(czas,dane)
         elif decyzja == '2':
             wykresy_probki(dane)
+        elif decyzja == '3':
+            wykresy_probki(dane,int(input("Ile probek? ")))
         else :
-            print("Nie analizujemy tego pliku !")
             break
     
 
@@ -100,6 +159,20 @@ def obrobka_danych_z_pliku(nazwa_pliku):
 
 ################################################################################
 
-nazwa_pliku = "Bieg2_Accelerometer.csv" # input("Podaj nazwe pliku: ")
+#nazwa_pliku = "Bieg2_Accelerometer.csv" # input("Podaj nazwe pliku: ")
 
-obrobka_danych_z_pliku(nazwa_pliku)
+#obrobka_danych_z_pliku(nazwa_pliku)
+
+with os.scandir(os.curdir) as katalog_roboczy:
+        for plik in katalog_roboczy:
+            if(plik.name.find(".csv") == (-1)):
+               continue # TYLKO PLIKI CSV
+            print("Plik : " + plik.name + "\n")
+            print("1. Analiza pliku\n2. Pomin ten plik\nq - zamknij skrypt\n")
+            odpowiedz = input()
+            if odpowiedz == '1' :
+                obrobka_danych_z_pliku(plik.name)
+            elif odpowiedz == '2':
+                continue
+            else :
+                break
