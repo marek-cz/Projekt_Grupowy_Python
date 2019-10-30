@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.utils.np_utils import to_categorical
 
-liczba_epok = 10
+liczba_epok = 50
 
-wymiar_warstw = 16
+wymiar_warstw = 8
 
 dane = np.load('data.npy')
 etykiety_liczby = np.load('labels.npy')
@@ -59,7 +59,7 @@ model.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accu
 
 # TRENOWANIE MODELU
 
-historia_treningu = model.fit(dane_treningowe, etykiety_treningowe, epochs = liczba_epok, batch_size = 52,
+historia_treningu = model.fit(dane_treningowe, etykiety_treningowe, epochs = liczba_epok, batch_size = 32,
                               validation_data=(dane_walidacyjne, etykiety_walidacyjne))
 
 # WYNIKI
@@ -68,25 +68,41 @@ acc = historia_treningu.history['acc']
 val_acc = historia_treningu.history['val_acc']
 loss = historia_treningu.history['loss']
 val_loss = historia_treningu.history['val_loss']
-# WYKRES DOKLADNOSCI
+
 epoki = range(1,len(acc)+1)
-plt.plot(epoki,acc,'bo',label = 'Doklanopsc trenowania')
-plt.plot(epoki,val_acc,'b',label = 'Doklanopsc walidacji')
-plt.title('Dokldanopsc trenowania i walidacji')
-plt.xlabel('Epoki')
-plt.ylabel('Doklanopsc')
-plt.legend()
+
+fig, ax = plt.subplots(2, 1)
+
+ax[0].plot(epoki,acc,'bo',label = 'Doklanosc trenowania')
+ax[0].plot(epoki,val_acc,'b',label = 'Doklanosc walidacji')
+ax[0].set_title('Dokldanosc trenowania i walidacji')
+ax[0].set_xlabel('Epoki')
+ax[0].set_ylabel('Doklanopsc')
+
+ax[1].plot(epoki,loss,'ro',label = 'Strata trenowania')
+ax[1].plot(epoki,val_loss,'r',label = 'Strata walidacji')
+ax[1].set_title('Strata trenowania i walidacji')
+ax[1].set_xlabel('Epoki')
+ax[1].set_ylabel('Strata')
+# WYKRES DOKLADNOSCI
+#epoki = range(1,len(acc)+1)
+#plt.plot(epoki,acc,'bo',label = 'Doklanopsc trenowania')
+#plt.plot(epoki,val_acc,'b',label = 'Doklanopsc walidacji')
+#plt.title('Dokldanopsc trenowania i walidacji')
+#plt.xlabel('Epoki')
+#plt.ylabel('Doklanopsc')
+#plt.legend()
 plt.show()
 
 #WYKRES STRATY
-plt.clf()
-plt.plot(epoki,loss,'ro',label = 'Strata trenowania')
-plt.plot(epoki,val_loss,'r',label = 'Strata walidacji')
-plt.title('Strata trenowania i walidacji')
-plt.xlabel('Epoki')
-plt.ylabel('Strata')
-plt.legend()
-plt.show()
+#plt.clf()
+#plt.plot(epoki,loss,'ro',label = 'Strata trenowania')
+#plt.plot(epoki,val_loss,'r',label = 'Strata walidacji')
+#plt.title('Strata trenowania i walidacji')
+#plt.xlabel('Epoki')
+#plt.ylabel('Strata')
+#plt.legend()
+#plt.show()
 
 # WYNIKI WALIDACYJNE:
 
