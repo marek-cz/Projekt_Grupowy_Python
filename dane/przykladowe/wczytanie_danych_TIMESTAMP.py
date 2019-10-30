@@ -3,26 +3,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import funkcje # wlasny modul z funkcjami
 
+ZAKRES_AKCELEROMETRU = 8000
+ZAKRES_ZYROSKOPU     = 2000
 
 ##############################################################################################
 liczba_probek_w_paczce = int(input("Podaj liczbe probek w paczce danych : "))
 ##############################################################################################
 #       ETYKIETY DANYCH :
-slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 }
+slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 ,"Stanie" : 3}
 ################################################################################################
 
 
 (dane_akcelerometr , dane_zyroskop) = funkcje.wczytaj_dane_z_plikow(liczba_probek_w_paczce, slownik_etykiet_danych) # wczytuje dane z plikow csv w folderze roboczym
 
-# PRZEKSZTALCENIE DANYCH ZE STRINGOW NA LICZBY
+# PRZEKSZTALCENIE DANYCH ZE STRINGOW NA LICZBY + NORMALIZACJA WZGLEDEM ZAKRESU POMIAROWEGO
 
-akcelerometr_x = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,0)).astype('float32')
-akcelerometr_y = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,1)).astype('float32')
-akcelerometr_z = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,2)).astype('float32')
+akcelerometr_x = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,0)).astype('float32') / ZAKRES_AKCELEROMETRU
+akcelerometr_y = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,1)).astype('float32') / ZAKRES_AKCELEROMETRU
+akcelerometr_z = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_akcelerometr,2)).astype('float32') / ZAKRES_AKCELEROMETRU
 
-zyroskop_x = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,0)).astype('float32')
-zyroskop_y = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,1)).astype('float32')
-zyroskop_z = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,2)).astype('float32')
+zyroskop_x = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,0)).astype('float32') / ZAKRES_ZYROSKOPU
+zyroskop_y = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,1)).astype('float32') / ZAKRES_ZYROSKOPU
+zyroskop_z = np.asarray(funkcje.wyodrebnij_os_z_tablicy(dane_zyroskop,2)).astype('float32') / ZAKRES_ZYROSKOPU
 
 ##########################################################################################################################################
 
@@ -44,6 +46,12 @@ while(licznik < liczba_probek):
     etykiety[licznik] = dane_akcelerometr[licznik *liczba_probek_w_paczce][3]
     licznik += 1
 
+# WYROWNANIE LICZBY DANYCH DLA KAZDEJ AKTYWNOSCI:
+
+dane , etykiety = funkcje.wyrownaj_liczbe_danych(dane,etykiety,slownik_etykiet_danych)
+
+ksztalt_danych = dane.shape
+liczba_probek  = ksztalt_danych[0]
 # LOSOWANIE KOLEJNOSCI PROBEK
 
 kolejnosc = np.arange(0,liczba_probek,1)
@@ -51,8 +59,8 @@ np.random.shuffle(kolejnosc)
 
 labels = np.zeros((liczba_probek,))
 data = np.zeros((liczba_probek,6,liczba_probek_w_paczce))
-funkcje.ustaw_w_losowej_kolejnosci(kolejnosc,etykiety,labels,liczba_probek)
-funkcje.ustaw_w_losowej_kolejnosci(kolejnosc,dane, data, liczba_probek)
+funkcje.ustaw_w_zadanej_kolejnosci(kolejnosc,etykiety,labels,liczba_probek)
+funkcje.ustaw_w_zadanej_kolejnosci(kolejnosc,dane, data, liczba_probek)
 
 # zapisanie do plikow:
 np.save("data",data)
