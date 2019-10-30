@@ -252,6 +252,7 @@ def analza_statystyczna(nazwa_pliku_akc,nazwa_pliku_gyr,etykieta_pliku):
     dane_z_plikow = wczytanie_danych_z_dwoch_plikow(nazwa_pliku_akc,nazwa_pliku_gyr)
     opisy_osi = ["os_x_akc : " ,"os_y_akc : ","os_z_akc : ","os_x_gyr: ","os_y_gyr: ","os_z_gyr: "]
     print(etykieta_pliku + " ANALIZA PARAMETROW STATYSTYCZNYCH: \n")
+    
     # wartosci srednie:
     print("1. Wartosci srednie :")
     for i in range( len(dane_z_plikow) ):
@@ -302,7 +303,7 @@ def osie_z_danych_np_float32(dane):
     os_y = np.asarray(os_y).astype('float32')
     os_z = np.asarray(os_z).astype('float32')
 
-    return (os_x,os_x,os_x)
+    return (os_x,os_y,os_z)
 
 def fitracja_cyfrowa(dane,fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db):
     wspolczynniki_filtru = projekt_filtru_cyfrowego(fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db)
