@@ -10,6 +10,7 @@ from scipy import signal
 import matplotlib.pyplot as plt
 import os # biblioteka do poruszania sie w systemie plikow
 import funkcje as f
+from scipy.signal import kaiserord, lfilter, firwin, freqz
 
 ###############################################################################
 def rysuj_wykres(czas,tablica_danych,y_label,label = 'dane',x_label = 'timestamp'):
@@ -73,10 +74,15 @@ def wykresy_timestamp_FFT(czas,dane):
     plt.show()
 
 
-def wykresy_probki_FFT(dane,ile_probek = -1):
-    os_x = f.wyodrebnij_os_z_tablicy(dane,0)
-    os_y = f.wyodrebnij_os_z_tablicy(dane,1)
-    os_z = f.wyodrebnij_os_z_tablicy(dane,2)
+def wykresy_probki_FFT(dane,ile_probek = -1,osie_juz_podzielone = False,x = None,y = None ,z = None):
+    if not osie_juz_podzielone :
+        os_x = f.wyodrebnij_os_z_tablicy(dane,0)
+        os_y = f.wyodrebnij_os_z_tablicy(dane,1)
+        os_z = f.wyodrebnij_os_z_tablicy(dane,2)
+    else :
+        os_x = x
+        os_y = y
+        os_z = z
     
     dane_do_wykresu = [os_x,os_y,os_z]
     dziedzina = [list( range( len( os_x ) ) ),list( range( len( os_y ) ) ),list( range( len( os_z ) ) )]
@@ -165,7 +171,7 @@ def rysuj_wykres_3_na_2(dane, dziedzina ,x_label,y_label, tytuly, ile_probek = -
             liczba_probek = liczba_probek[srodek : srodek + ile_probek]
             indeks_poczatkowy = srodek
             indeks_koncowy = srodek + ile_probek
-        ax[i,0].plot(dziedzina[i],dane[i][indeks_poczatkowy : indeks_koncowy],'b')
+        ax[i,0].plot(dziedzina[i][indeks_poczatkowy : indeks_koncowy],dane[i][indeks_poczatkowy : indeks_koncowy],'b')
         ax[i,0].set_xlabel(x_label[i])
         ax[i,0].set_ylabel(y_label[i])
     ax[0,0].set_title(tytuly[0])
@@ -180,7 +186,7 @@ def rysuj_wykres_3_na_2(dane, dziedzina ,x_label,y_label, tytuly, ile_probek = -
             liczba_probek = liczba_probek[srodek : srodek + ile_probek]
             indeks_poczatkowy = srodek
             indeks_koncowy = srodek + ile_probek
-        ax[i,1].plot(dziedzina[i+3],dane[i+3][indeks_poczatkowy : indeks_koncowy],'r')
+        ax[i,1].plot(dziedzina[i+3][indeks_poczatkowy : indeks_koncowy],dane[i+3][indeks_poczatkowy : indeks_koncowy],'r')
         ax[i,1].set_xlabel(x_label[i+3])
         ax[i,1].set_ylabel(y_label[i+3])
     ax[0,1].set_title(tytuly[1])
@@ -237,20 +243,9 @@ def wczytanie_danych_z_dwoch_plikow(nazwa_pliku_akc,nazwa_pliku_gyr):
     dane_gyr,czas = f.wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_gyr,1) # etykieta nie jest tutaj wazna
     dane_gyr = np.asarray(dane_gyr).astype('float32')
     
-    os_x_akc = f.wyodrebnij_os_z_tablicy(dane_akc,0)
-    os_y_akc = f.wyodrebnij_os_z_tablicy(dane_akc,1)
-    os_z_akc = f.wyodrebnij_os_z_tablicy(dane_akc,2)
-    os_x_akc = np.asarray(os_x_akc).astype('float32')
-    os_y_akc = np.asarray(os_y_akc).astype('float32')
-    os_z_akc = np.asarray(os_z_akc).astype('float32')
-
-    os_x_gyr = f.wyodrebnij_os_z_tablicy(dane_gyr,0)
-    os_y_gyr = f.wyodrebnij_os_z_tablicy(dane_gyr,1)
-    os_z_gyr = f.wyodrebnij_os_z_tablicy(dane_gyr,2)
-    os_x_gyr = np.asarray(os_x_gyr).astype('float32')
-    os_y_gyr = np.asarray(os_y_gyr).astype('float32')
-    os_z_gyr = np.asarray(os_z_gyr).astype('float32')
-
+    os_x_akc,os_y_akc,os_z_akc = osie_z_danych_np_float32(dane_akc)
+    os_x_gyr,os_y_gyr,os_z_gyr = osie_z_danych_np_float32(dane_gyr)
+    
     return [os_x_akc,os_y_akc,os_z_akc,os_x_gyr,os_y_gyr,os_z_gyr]
 
 def analza_statystyczna(nazwa_pliku_akc,nazwa_pliku_gyr,etykieta_pliku):
@@ -275,7 +270,69 @@ def analza_statystyczna(nazwa_pliku_akc,nazwa_pliku_gyr,etykieta_pliku):
     for i in range( len(dane_z_plikow) ):
         print(opisy_osi[i] + str(np.median(dane_z_plikow[i])))
 
+    # Czestotliwosc najwiekszego piku (bez DC!!!):
+    print("Czestotliwosc maksymalnego piku :")
+    for i in range( len(dane_z_plikow) ):
+        fft_sygnalu, frq = FFT_sygnalu(dane_z_plikow[i])
+        modul_fft = np.abs(fft_sygnalu[1:])
+        maks_pik = max(modul_fft)
+        indeks_maks_pik = np.where(modul_fft == maks_pik)
+        frq = frq[1:]
+        print(opisy_osi[i] + str( frq[indeks_maks_pik] ) + " Hz" )
 
+
+def projekt_filtru_cyfrowego(fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db):
+    # PARAMETRY FILTRU
+    czestotliwosc_NYQ = fs / 2.0
+    szerokosc_pasma_przejsciowego = szerokosc_pasma_przejsciowego_Hz / czestotliwosc_NYQ # 5 Hz
+
+    N, beta = kaiserord(tlumienie_w_pasmie_zaporowym_db, szerokosc_pasma_przejsciowego) # wyznaczenmie parametrow filtru Kaisera
+    
+    # Use firwin with a Kaiser window to create a lowpass FIR filter.
+    wspolczynniki = firwin(N,czestotliwosc_odciecia_Hz/czestotliwosc_NYQ , window=('kaiser', beta))
+
+    return wspolczynniki
+
+def osie_z_danych_np_float32(dane):
+    os_x = f.wyodrebnij_os_z_tablicy(dane,0)
+    os_y = f.wyodrebnij_os_z_tablicy(dane,1)
+    os_z = f.wyodrebnij_os_z_tablicy(dane,2)
+
+    os_x = np.asarray(os_x).astype('float32')
+    os_y = np.asarray(os_y).astype('float32')
+    os_z = np.asarray(os_z).astype('float32')
+
+    return (os_x,os_x,os_x)
+
+def fitracja_cyfrowa(dane,fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db):
+    wspolczynniki_filtru = projekt_filtru_cyfrowego(fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db)
+
+    os_x,os_y,os_z = osie_z_danych_np_float32(dane)
+    
+    #FILTRACJA:
+    filtered_x = lfilter(wspolczynniki_filtru, 1.0, os_x)
+    filtered_y = lfilter(wspolczynniki_filtru, 1.0, os_y)
+    filtered_z = lfilter(wspolczynniki_filtru, 1.0, os_z)
+
+    return (filtered_x,filtered_y,filtered_z)
+    
+def wykresy_filtracja_cyfrowa(dane,fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db):
+    decyzja = input("1.Wykresy czasowe + widmo\n2.Porownanie wykresow czasowych\n ")
+    if decyzja == '1' :
+        x,y,z = fitracja_cyfrowa(dane,fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db)
+        wykresy_probki_FFT(dane,osie_juz_podzielone=True,x=x,y=y,z=z)
+    elif decyzja == '2' :
+        x_f,y_f,z_f = fitracja_cyfrowa(dane,fs,szerokosc_pasma_przejsciowego_Hz, czestotliwosc_odciecia_Hz,tlumienie_w_pasmie_zaporowym_db) # dane po filtracji
+        x_o,y_o,z_o = osie_z_danych_np_float32(dane) # dane oryginalne
+
+        dane_do_wykresu = [x_o,y_o,z_o,x_f,y_f,z_f]
+        dziedzina = [list( range( len( x_o ) ) ),list( range( len( y_o ) ) ),list( range( len( z_o ) ) ),list( range( len(x_f ) ) ),list( range( len( y_f ) ) ),list( range( len( z_f ) ) )]
+        x_label = ["Probki","Probki","Probki","Probki","Probki","Probki"]
+        y_label = ["OS X","OS Y","OS Z","OS X","OS Y","OS Z"]
+        tytuly = ["PRZED FILTRACJA","PO FILTRACJI"]
+
+        rysuj_wykres_3_na_2(dane_do_wykresu, dziedzina ,x_label,y_label, tytuly, ile_probek = 300)
+        
 def obrobka_danych_z_pliku(nazwa_pliku):
     """ Wczytujemy dane z plikow i je analizujemy"""
     with ( open(nazwa_pliku,"r")) as plik:
@@ -295,13 +352,15 @@ def obrobka_danych_z_pliku(nazwa_pliku):
             while(True):
                 print("Co chcesz zrobic?\n")
                 print("1.Wykresy czas i FFT\n2.Wykresy czasowe akcelerometr i zyroskop")
-                print("3.Spektrogram\n")
+                print("3.Spektrogram\n4.Filtracja cyfrowa\n")
                 decyzja = input("q - wyjscie\n")
                 if decyzja =='1' : wykresy_FFT(decyzja,czas,dane)
                 elif decyzja =='2' :
                     wykresy_2_pliki(nazwa_pliku,typ_pliku,dane)
                 elif decyzja =='3' :
                     spektrogram(dane,100)
+                elif decyzja =='4' :
+                    wykresy_filtracja_cyfrowa(dane,100,2.0,12.0,60)
                 elif decyzja =="q" : break
                 else : print("BLAD!")
                 
@@ -309,18 +368,24 @@ def obrobka_danych_z_pliku(nazwa_pliku):
 ################################################################################
 
 
+if int(input("Analiza statystyczna WSZYSTKICH plikow? 0 - nie")) :
+    lista_przetworzonych_plikow = [] # lista na nazwy plikow ktore byly juz przetwarzane
+    oznaczenie_gyr = "_Gyroscope.csv"
+    licznik_plikow = 0
 
-lista_przetworzonych_plikow = [] # lista na nazwy plikow ktore byly juz przetwarzane
-oznaczenie_gyr = "_Gyroscope.csv"
+    with os.scandir(os.curdir) as katalog_roboczy:
+        for plik in katalog_roboczy:
+            if(plik.name.find("Accelerometer.csv") != (-1) and not ( plik.name in lista_przetworzonych_plikow ) ) : # szukamy plikow akcelerometru, ktore nie byly jeszcze przetwarzane
+                nazwa_pliku_tokeny = plik.name.split('_') # dzielimy po _
+                etykieta_pliku = nazwa_pliku_tokeny[0]
+                nazwa_pliku_gyr = etykieta_pliku + oznaczenie_gyr
+                analza_statystyczna(plik.name,nazwa_pliku_gyr,etykieta_pliku)
+                lista_przetworzonych_plikow.append(plik.name)
+                licznik_plikow += 1
 
-with os.scandir(os.curdir) as katalog_roboczy:
-    for plik in katalog_roboczy:
-        if(plik.name.find("Accelerometer.csv") != (-1) and not ( plik.name in lista_przetworzonych_plikow ) ) : # szukamy plikow akcelerometru, ktore nie byly jeszcze przetwarzane
-            nazwa_pliku_tokeny = plik.name.split('_') # dzielimy po _
-            etykieta_pliku = nazwa_pliku_tokeny[0]
-            nazwa_pliku_gyr = etykieta_pliku + oznaczenie_gyr
-            analza_statystyczna(plik.name,nazwa_pliku_gyr,etykieta_pliku)
-            lista_przetworzonych_plikow.append(plik.name) 
+    print("\n")
+    print(licznik_plikow)
+    print("\n\n")
 
 
 with os.scandir(os.curdir) as katalog_roboczy:
