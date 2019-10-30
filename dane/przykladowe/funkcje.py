@@ -47,26 +47,6 @@ def wyodrebnij_os_z_tablicy(tablica, numer_osi):
 
     return os
 
-def normalizuj(x): # dokladniej standaryzacja - wartosc srednia 0 i odchylenie standardowe 1
-    x -= x.mean()
-    x /= x.std()
-
-def normalizuj_tablice_2D_po_osiach(tablica):
-    """Normalizuje kazdy wiersz tablicy 2D """
-    liczba_wierszy = len(tablica)
-    # wydobywamy osie
-    x = np.asarray(wyodrebnij_os_z_tablicy(tablica,0)).astype('float32')
-    y = np.asarray(wyodrebnij_os_z_tablicy(tablica,1)).astype('float32')
-    z = np.asarray(wyodrebnij_os_z_tablicy(tablica,2)).astype('float32')
-
-    # normalizacja po osiach
-    normalizuj(x)
-    normalizuj(y)
-    normalizuj(z)
-    # skladamy znowu razem z etykietami
-    for i in range(liczba_wierszy):
-        tablica[i] = [x[i],y[i],z[i],tablica[i][3]] # tablica[i][3] - ETYKIETA
-
 
 def usun_ostatnie_N_rekordow(lista,N):
     licznik = 1
@@ -82,7 +62,7 @@ def dopasuj_rozmiar_listy(lista, liczba_probek_w_paczce):
         liczba_rekordow_do_usuniecia = len(lista) - (liczba_paczek * liczba_probek_w_paczce)
         usun_ostatnie_N_rekordow(lista,liczba_rekordow_do_usuniecia)
 
-def ustaw_w_losowej_kolejnosci(kolejnosc,tablica_oryginalna, tablica_docelowa,liczba_probek):
+def ustaw_w_zadanej_kolejnosci(kolejnosc,tablica_oryginalna, tablica_docelowa,liczba_probek):
     """ Ustawia tablica_docelowa wedlug kolejnosci podanej w liscie kolejnosc"""
     licznik = 0
     while(licznik < liczba_probek):
@@ -99,6 +79,8 @@ def wyznacz_etykiete(etykieta_pliku, slownik_etykiet_danych ):
         return slownik_etykiet_danych["Marsz"]
     elif ( etykieta_pliku.find("Trucht") !=(-1) ):
         return slownik_etykiet_danych["Trucht"]
+    elif ( etykieta_pliku.find("Stanie") !=(-1) ):
+        return slownik_etykiet_danych["Stanie"]
     else :
         return -1 # blad
 
@@ -123,15 +105,11 @@ def wczytaj_dane_z_plikow(liczba_probek_w_paczce, slownik_etykiet_danych):
                 etykieta = wyznacz_etykiete(etykieta_pliku, slownik_etykiet_danych)
                 if ( etykieta != (-1) ): # jezeli nazwa pliku zawiera etykiete danych
                     # WCZYTAJ DANE
-                    lista_tmp_akc = wczytaj_dane_z_pliku_csv_Timestamp(plik.name,etykieta)
-                    lista_tmp_gyr = wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_gyr,etykieta)
+                    lista_tmp_akc,timestamp = wczytaj_dane_z_pliku_csv_Timestamp(plik.name,etykieta)
+                    lista_tmp_gyr,timestamp = wczytaj_dane_z_pliku_csv_Timestamp(nazwa_pliku_gyr,etykieta)
                     # DOPASUJ ROZMIAR
                     dopasuj_rozmiar_listy(lista_tmp_akc,liczba_probek_w_paczce)
                     dopasuj_rozmiar_listy(lista_tmp_gyr,liczba_probek_w_paczce)
-
-                    # NORMALIZACJA
-                    normalizuj_tablice_2D_po_osiach(lista_tmp_akc)
-                    normalizuj_tablice_2D_po_osiach(lista_tmp_gyr)
                     
                     # DODAJ DO BUFORA
                     lista_akc += lista_tmp_akc
@@ -141,5 +119,43 @@ def wczytaj_dane_z_plikow(liczba_probek_w_paczce, slownik_etykiet_danych):
                 lista_przetworzonych_plikow.append(plik.name)
 
     return (lista_akc,lista_gyr)
-        
+
+
+def wyrownaj_liczbe_danych(dane, etykiety,slownik_etykiet_danych):
+    """ Sprawdzamy ile jest danych do kazdej z aktywnosci i ograniczamy liczbe
+        danych innych aktywnosci, tak aby danych do kazdej aktywnosci bylo tyle
+        samo"""
+    lista_aktywnosci = list( slownik_etykiet_danych.keys() )
+    lista_etykiet = list( etykiety )
+    ksztalt_danych = dane.shape
+    wystapienia = {}
+    for aktywnosc in lista_aktywnosci:
+        wystapienia[aktywnosc] = lista_etykiet.count(slownik_etykiet_danych[aktywnosc])
+    liczby_wystapien_aktywnosci = list(wystapienia.values())
+    minimalna_liczba_wystapien = min( liczby_wystapien_aktywnosci )
+
+    print("AKTYWNOSCI W DANYCH WEJSCIOWYCH")
+    print(wystapienia)
+    
+    return_dane = np.zeros( ( len(slownik_etykiet_danych) * minimalna_liczba_wystapien,ksztalt_danych[1],ksztalt_danych[2] ) )
+    return_etykiety = np.zeros( (len(slownik_etykiet_danych) * minimalna_liczba_wystapien,) )
+
+    wektor_wystapien = np.zeros( ( len(slownik_etykiet_danych) , ) ) # tu bedziemy zliczac ile razy dana etykieta juz wystapila
+    return_dane_licznik = 0
+    
+    for i in range(len(dane)):
+        if  wektor_wystapien[int(etykiety[i])] < minimalna_liczba_wystapien :
+            wektor_wystapien[int(etykiety[i])] += 1
+            return_dane[return_dane_licznik]     = dane[i]
+            return_etykiety[return_dane_licznik] = etykiety[i]
+            return_dane_licznik += 1
+            
+    lista_etykiet = list( return_etykiety )
+    wystapienia = {}
+    for aktywnosc in lista_aktywnosci:
+        wystapienia[aktywnosc] = lista_etykiet.count(slownik_etykiet_danych[aktywnosc])
+    print("AKTYWNOSCI PO WYROWNANIU:")
+    print(wystapienia)
+
+    return (return_dane,return_etykiety)
 ################################################################################################
