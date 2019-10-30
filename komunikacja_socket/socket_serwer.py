@@ -1,8 +1,24 @@
 
 # KOMUNIKACJA KLIENT - SERWER
 # PROCES SERWERA
+
+ZAKRES_AKCELEROMETR = 8000
+ZAKRES_ZYROSKOP     = 2000
+
 ###############################################################################################
 def wyodrebnij_osie_danych(lista):
+    result = [[],[],[],[],[],[]]
+    for probka in lista:
+        result[0].append(probka[0] / ZAKRES_AKCELEROMETR ) # AKCELEROMETR X + NORMALIZACJA WZGLEDEM ZAKRESU
+        result[1].append(probka[1] / ZAKRES_AKCELEROMETR ) # AKCELEROMETR Y
+        result[2].append(probka[2] / ZAKRES_AKCELEROMETR ) # AKCELEROMETR Z
+        result[3].append(probka[3] / ZAKRES_ZYROSKOP ) # ZYROSKOP X
+        result[4].append(probka[4] / ZAKRES_ZYROSKOP ) # ZYROSKOP Y
+        result[5].append(probka[5] / ZAKRES_ZYROSKOP ) # ZYROSKOP Z
+
+    return result
+
+def wyodrebnij_osie_danych_string(lista):
     result = [[],[],[],[],[],[]]
     for probka in lista:
         result[0].append(probka[0]) # AKCELEROMETR X
@@ -13,6 +29,7 @@ def wyodrebnij_osie_danych(lista):
         result[5].append(probka[5]) # ZYROSKOP Z
 
     return result
+
 
 def normalizuj(x): # dokladniej standaryzacja - wartosc srednia 0 i odchylenie standardowe 1
     srednie = x.mean(axis=1)
@@ -55,7 +72,7 @@ import datetime
 model = load_model("../zapis_modelu.h5") # wczytanie modelu klasyfikatora
 IP_SERWERA = '' # U serwera puste
 PORT = 5005 # liczba 16-bitowa, wiekszta niz 1024
-BUFOR_ROZMIAR = 4096
+BUFOR_ROZMIAR = 20000
 
 wykryta_aktywnosc = ["Marsz", "Trucht", "Bieg"]
 nazwa_pliku_z_baza_danych = "plik_bazy_danych.db"
@@ -79,23 +96,29 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         data = connection.recv(BUFOR_ROZMIAR)
         if not data : break
         ramka_danych_string = data.decode() # dane sa odbierane w formacie Byte
+        while ramka_danych_string[-1] != '$' :
+            data = connection.recv(BUFOR_ROZMIAR)
+            if not data : break
+            ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
         if ramka_danych_string =="END" : connection.send("END".encode())
-        print('Odebralem dane : \n', ramka_danych_string)
-        print("\n\n")
+        #print('Odebralem dane : \n', ramka_danych_string)
+        #print("\n\n")
 
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
         # w zaleznosci od typu ramki - DO USTALENIA NA SPOTKANIU!!!! - realizujemy odpowiedznie operacje
         
-        if ramka_danych_lista_stringow[0] == "Klasyfikacja" : # zakladana ramka : [Klasyfikacja][ID_ZAWODNIKA][DANE]
+        if ramka_danych_lista_stringow[0] == "Klasyfikacja" : # zakladana ramka : [Klasyfikacja][ID_ZAWODNIKA][DANE][$]
             # [DANE] = [Timestamp][a_x][a_y][a_z][g_x][g_y][g_z] x Liczba_probek_w_paczce
-            lista_probek_timestamp = lista_stringow_na_liste_probek(ramka_danych_lista_stringow[2:])
+            lista_probek_timestamp = lista_stringow_na_liste_probek(ramka_danych_lista_stringow[2:-1])
             lista_probek_timestamp.sort() # sortujemy po Timestamp
             lista_posortowanych_probek = usun_timestamp(lista_probek_timestamp) # usuwamy timestamp
             
-            dane_osie = wyodrebnij_osie_danych(lista_posortowanych_probek) # podzial probek na osie czujnikow
+            lista_posortowanych_probek_float = np.asarray(lista_posortowanych_probek).astype('float32') # przechodzimy na floaty
+            
+            dane_osie = wyodrebnij_osie_danych(lista_posortowanych_probek_float) # podzial probek na osie czujnikow
             
             probka = np.asarray(dane_osie).astype('float32')
-            normalizuj(probka)
+            #normalizuj(probka)
             shape = probka.shape
             probka = probka.reshape(1,shape[0]*shape[1])
             klasyfikacja = model.predict(probka)
@@ -105,6 +128,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"  + str(klasyfikacja) + "\n"
             connection.send(odpowiedz.encode())
             # wpisz do bazy danych
+            dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
             kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
             kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
             polaczenie_z_baza_danych.commit()
