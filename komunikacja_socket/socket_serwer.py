@@ -5,6 +5,13 @@
 ZAKRES_AKCELEROMETR = 8000
 ZAKRES_ZYROSKOP     = 2000
 
+IP_SERWERA = '' # U serwera puste
+PORT = 5005 # liczba 16-bitowa, wiekszta niz 1024
+BUFOR_ROZMIAR = 4096
+
+wykryta_aktywnosc = ["Marsz", "Trucht", "Bieg","Stanie"]
+nazwa_pliku_z_baza_danych = "plik_bazy_danych.db"
+
 ###############################################################################################
 def wyodrebnij_osie_danych(lista):
     result = [[],[],[],[],[],[]]
@@ -68,15 +75,7 @@ from keras.models import load_model
 import sqlite3
 import datetime
 
-
 model = load_model("../zapis_modelu.h5") # wczytanie modelu klasyfikatora
-IP_SERWERA = '' # U serwera puste
-PORT = 5005 # liczba 16-bitowa, wiekszta niz 1024
-BUFOR_ROZMIAR = 20000
-
-wykryta_aktywnosc = ["Marsz", "Trucht", "Bieg"]
-nazwa_pliku_z_baza_danych = "plik_bazy_danych.db"
-
 # polaczenie z baza danych SQLite
 polaczenie_z_baza_danych = sqlite3.connect(nazwa_pliku_z_baza_danych)
 kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
