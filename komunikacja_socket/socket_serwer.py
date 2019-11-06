@@ -95,12 +95,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         data = connection.recv(BUFOR_ROZMIAR)
         if not data : break
         ramka_danych_string = data.decode() # dane sa odbierane w formacie Byte
-        while ramka_danych_string[-1] != '$' :
+        ramka_danych_lista_stringow = ramka_danych_string.split()
+        while ramka_danych_lista_stringow[-1] != '$' :
             data = connection.recv(BUFOR_ROZMIAR)
             if not data : break
             ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
+            ramka_danych_lista_stringow = ramka_danych_string.split()
         if ramka_danych_string =="END" : connection.send("END".encode())
-        #print('Odebralem dane : \n', ramka_danych_string)
+        print('Odebralem dane : \n', ramka_danych_string)
         #print("\n\n")
 
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
@@ -126,6 +128,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # odeslij wynik klasyfikacji
             odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"  + str(klasyfikacja) + "\n"
             connection.send(odpowiedz.encode())
+            print(odpowiedz)
             # wpisz do bazy danych
             dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
             kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
