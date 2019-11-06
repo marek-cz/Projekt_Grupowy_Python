@@ -98,8 +98,8 @@ import datetime
 
 
 # polaczenie z baza danych SQLite
-polaczenie_z_baza_danych = sqlite3.connect(nazwa_pliku_z_baza_danych)
-kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
+#polaczenie_z_baza_danych = sqlite3.connect(nazwa_pliku_z_baza_danych)
+#kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -116,19 +116,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         data = connection.recv(BUFOR_ROZMIAR)
         if not data : break
         ramka_danych_string = data.decode() # dane sa odbierane w formacie Byte
-        while ramka_danych_string[-1] != '$' :
+        ramka_danych_lista_stringow = ramka_danych_string.split()
+        while ramka_danych_lista_stringow[-1] != '$' :
             data = connection.recv(BUFOR_ROZMIAR)
             if not data : break
             ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
+            ramka_danych_lista_stringow = ramka_danych_string.split()
         if ramka_danych_string =="END" : connection.send("END".encode())
-        #print('Odebralem dane : \n', ramka_danych_string)
+        print('Odebralem dane : \n', ramka_danych_string)
         #print("\n\n")
 
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
+        print(len(ramka_danych_lista_stringow))
         # w zaleznosci od typu ramki - DO USTALENIA NA SPOTKANIU!!!! - realizujemy odpowiedznie operacje
         
         if ramka_danych_lista_stringow[0] == "Klasyfikacja" : # zakladana ramka : [Klasyfikacja][ID_ZAWODNIKA][DANE][$]
             # [DANE] = [Timestamp][a_x][a_y][a_z][g_x][g_y][g_z] x Liczba_probek_w_paczce
+            print("\nKLASYFIKUJE!\n")
             lista_probek_timestamp = lista_stringow_na_liste_probek(ramka_danych_lista_stringow[2:-1])
             lista_probek_timestamp.sort() # sortujemy po Timestamp
             lista_posortowanych_probek = usun_timestamp(lista_probek_timestamp) # usuwamy timestamp
@@ -145,14 +149,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"
             connection.send(odpowiedz.encode())
             # wpisz do bazy danych
-            dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
-            kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
-            kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
-            polaczenie_z_baza_danych.commit()
+            #dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
+            #kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
+            #kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
+            #polaczenie_z_baza_danych.commit()
         elif ramka_danych_lista_stringow[0] == "Wpis" : # wpisanie zawodnika [WPIS][IMIE][NAZWISKO][KLUB]
             kursor_bazy_danych.execute("insert into zawodnik (imie,nazwisko,klub) values(?,?,?)", (ramka_danych_lista_stringow[1],ramka_danych_lista_stringow[2],ramka_danych_lista_stringow[3]) )
         #elif ramka_danych_lista_stringow[0] == "Zapytanie" :
             # kod obslugi zapytania
+        else :
+            print("DUPA")
             
 
 
@@ -162,7 +168,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 #wynik = kursor_bazy_danych.execute("select * from probki")
 
 #print(wynik.fetchall()) # fetchall() - wybiera wszystkie rekordy | fetchone - 1 wiersz|fetchmany - kilka wierszy
-polaczenie_z_baza_danych.commit()
-polaczenie_z_baza_danych.close()
+#polaczenie_z_baza_danych.commit()
+#polaczenie_z_baza_danych.close()
 
 
