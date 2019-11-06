@@ -98,8 +98,8 @@ import datetime
 
 
 # polaczenie z baza danych SQLite
-#polaczenie_z_baza_danych = sqlite3.connect(nazwa_pliku_z_baza_danych)
-#kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
+polaczenie_z_baza_danych = sqlite3.connect(nazwa_pliku_z_baza_danych)
+kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -158,8 +158,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             kursor_bazy_danych.execute("insert into zawodnik (imie,nazwisko,klub) values(?,?,?)", (ramka_danych_lista_stringow[1],ramka_danych_lista_stringow[2],ramka_danych_lista_stringow[3]) )
         #elif ramka_danych_lista_stringow[0] == "Zapytanie" :
             # kod obslugi zapytania
-        else :
-            print("DUPA")
             
 
 
