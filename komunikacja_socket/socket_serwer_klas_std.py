@@ -148,11 +148,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             #odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  "
             odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + wykryta_aktywnosc[indeks] + " \n"
             connection.send(odpowiedz.encode())
+            print(odpowiedz)
             # wpisz do bazy danych
-            #dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
-            #kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
-            #kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
-            #polaczenie_z_baza_danych.commit()
+            dane_osie = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
+            kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
+            kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
+            polaczenie_z_baza_danych.commit()
         elif ramka_danych_lista_stringow[0] == "Wpis" : # wpisanie zawodnika [WPIS][IMIE][NAZWISKO][KLUB]
             kursor_bazy_danych.execute("insert into zawodnik (imie,nazwisko,klub) values(?,?,?)", (ramka_danych_lista_stringow[1],ramka_danych_lista_stringow[2],ramka_danych_lista_stringow[3]) )
         #elif ramka_danych_lista_stringow[0] == "Zapytanie" :
