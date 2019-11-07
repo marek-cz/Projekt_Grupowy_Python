@@ -14,6 +14,7 @@ dane/przykladowe/klasyfikacja_marsz_trucht.py
 deep_learning_python/
 komunikacja_socket/*.db
 komunikacja_socket/*.txt 
+komunikacja_socket/__pycache__
 komunikacja_socket/serwer_echo.py
 komunikacja_socket/socket_client_1_komunikat.py
 komunikacja_socket/socket_client_petla.py
