@@ -2,6 +2,8 @@
 # KOMUNIKACJA KLIENT - SERWER
 # PROCES SERWERA
 
+POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA = 703
+
 import socket
 import numpy as np
 import funkcje_socket_serwer as funkcje # wlasny modul z funkcjami i stalymi
@@ -54,24 +56,45 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     connection, address = s.accept()
     print("Adres polaczenia: ", address)
 
+    ramka_danych_string = "" # inicjalizacja pustym stringiem
+    data = "".encode()
+
     while True:         # ODBIOR DANYCH
-        data = connection.recv(funkcje.BUFOR_ROZMIAR)
-        if not data : break # zakomentowac na probe
-        ramka_danych_string = data.decode() # dane sa odbierane w formacie Byte
-        ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
-        while ramka_danych_lista_stringow[-1] != '$' :
-            data = connection.recv(funkcje.BUFOR_ROZMIAR)
+        #data = connection.recv(funkcje.BUFOR_ROZMIAR)
+        #if not data : break # zakomentowac na probe
+        #ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
+        #ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
+        #while ramka_danych_lista_stringow[-1] != '$' :
+        
+        while ramka_danych_string.find('$') == -1 :
+            data += connection.recv(funkcje.BUFOR_ROZMIAR)
             if not data : break # zakomentowac na probe
-            ramka_danych_string += data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
-            ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU - zbiera CALA ramke danych w liste :)
+            ramka_danych_string = data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
+        ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
+        
+        if ramka_danych_lista_stringow[-1] != '$':
+            indeks_dolara = ramka_danych_lista_stringow.index('$')
+            ramka_danych_string = " ".join(ramka_danych_lista_stringow[indeks_dolara+1 : ])
+            ramka_danych_lista_stringow = ramka_danych_lista_stringow[: indeks_dolara+1] # wybieramy dane do '$' WLACZNIE!
+            data = ramka_danych_string.encode()
+        else :
+            ramka_danych_string= ""
+            data = " ".encode()
+
+        
         if ramka_danych_lista_stringow[0] =="END" :
             connection.send("END".encode())
             break
+
+        if len( ramka_danych_lista_stringow ) != POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli brakuje jakiejs probki...
+            print("Blad ramki")
+            continue # pomijamy te probke
         
         if ramka_danych_lista_stringow[0] in slownik_funkcji :
             slownik_funkcji[ramka_danych_lista_stringow[0]]()
         else :
             print("Bledna ramka!")
+            print(ramka_danych_lista_stringow)
             odpowiedz = "Bledna ramka!" + "\n" + ramka_danych_string
             connection.send(odpowiedz.encode())
         
