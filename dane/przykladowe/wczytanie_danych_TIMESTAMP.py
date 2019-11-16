@@ -63,5 +63,5 @@ funkcje.ustaw_w_zadanej_kolejnosci(kolejnosc,etykiety,labels,liczba_probek)
 funkcje.ustaw_w_zadanej_kolejnosci(kolejnosc,dane, data, liczba_probek)
 
 # zapisanie do plikow:
-np.save("data",data)
-np.save("labels",labels)
+np.save("../data_Socik",data)
+np.save("../labels_Socik",labels)
