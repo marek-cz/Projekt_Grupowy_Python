@@ -150,6 +150,6 @@ print("WYNIKI WALIDACJI: ",wyniki_walidacji)
 # zapisanie modelu do pliku
 
 from keras.models import load_model
-model.save("../../zapis_modelu.h5")
+model.save("../zapis_modelu.h5")
 # Trenowanie na wszystkich danych treningowych:
 #model.fit(dane, etykiety, epochs = liczba_epok, batch_size = 64)
