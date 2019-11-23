@@ -11,16 +11,22 @@ import datetime
 #                                       FUNKCJE - WYSOKOPOZIOMOWE 
 ####################################################################################################################################################################
 def Klasyfikacja():
-    probka , dane_osie = funkcje.lista_stringow_na_probke_BEZ_NORMALIZACJI(ramka_danych_lista_stringow[2:-1]) # WYSYLAMY DO FUNKCJI TYLKO DANE!!!
-    indeks = funkcje.klasyfikacja_odchylenie_std(probka)
-    # odeslij wynik klasyfikacji
-    odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
-    connection.send(odpowiedz.encode())
-    print(odpowiedz)
-    # wpisz do bazy danych
-    kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
-    kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
-    polaczenie_z_baza_danych.commit()
+    if len( ramka_danych_lista_stringow ) == POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli dlugosc ramki jest OK
+        probka , dane_osie = funkcje.lista_stringow_na_probke_BEZ_NORMALIZACJI(ramka_danych_lista_stringow[2:-1]) # WYSYLAMY DO FUNKCJI TYLKO DANE!!!
+        indeks = funkcje.klasyfikacja_odchylenie_std(probka)
+        # odeslij wynik klasyfikacji
+        odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
+        connection.send(odpowiedz.encode())
+        print(odpowiedz)
+        # wpisz do bazy danych
+        kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
+        kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
+        polaczenie_z_baza_danych.commit()
+    else:
+        print("\n\nDLUGOSC RAMKI SIE NIE ZGADZA\n\n")
+        probka , dane_osie = funkcje.lista_stringow_na_probke(ramka_danych_lista_stringow[2:-1],zamien_na_float = False)
+        kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), "BLAD" ,datetime.datetime.now() ) )
+        polaczenie_z_baza_danych.commit()
 
 def Wpis():
     print("Polecenie wpsiania do bazy danych")
@@ -50,29 +56,48 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     connection, address = s.accept()
     print("Adres polaczenia: ", address)
 
-    while True:
-        data = connection.recv(funkcje.BUFOR_ROZMIAR)
-        if not data : break # zakomentowac na probe
-        ramka_danych_string = data.decode() # dane sa odbierane w formacie Byte
-        ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
-        while ramka_danych_lista_stringow[-1] != '$' :
-            data = connection.recv(funkcje.BUFOR_ROZMIAR)
+
+    ramka_danych_string = "" # inicjalizacja pustym stringiem
+    data = "".encode()
+
+    while True:         # ODBIOR DANYCH
+        #data = connection.recv(funkcje.BUFOR_ROZMIAR)
+        #if not data : break # zakomentowac na probe
+        #ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
+        #ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
+        #while ramka_danych_lista_stringow[-1] != '$' :
+        
+        while ramka_danych_string.find('$') == -1 :
+            data += connection.recv(funkcje.BUFOR_ROZMIAR)
             if not data : break # zakomentowac na probe
-            ramka_danych_string += data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
-            ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU - zbiera CALA ramke danych w liste :)
+            ramka_danych_string = data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
+        ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
+        
+        if ramka_danych_lista_stringow[-1] != '$':
+            indeks_dolara = ramka_danych_lista_stringow.index('$')
+            ramka_danych_string = " ".join(ramka_danych_lista_stringow[indeks_dolara+1 : ])
+            ramka_danych_lista_stringow = ramka_danych_lista_stringow[: indeks_dolara+1] # wybieramy dane do '$' WLACZNIE!
+            data = ramka_danych_string.encode()
+        else :
+            ramka_danych_string= ""
+            data = " ".encode()
+
+        
         if ramka_danych_lista_stringow[0] =="END" :
             connection.send("END".encode())
             break
+
+        #if len( ramka_danych_lista_stringow ) != POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli brakuje jakiejs probki...
+            #print("Blad ramki")
         
         if ramka_danych_lista_stringow[0] in slownik_funkcji :
             slownik_funkcji[ramka_danych_lista_stringow[0]]()
         else :
             print("Bledna ramka!")
+            print(ramka_danych_lista_stringow)
             odpowiedz = "Bledna ramka!" + "\n" + ramka_danych_string
             connection.send(odpowiedz.encode())
-
-
-#print(wynik.fetchall()) # fetchall() - wybiera wszystkie rekordy | fetchone - 1 wiersz|fetchmany - kilka wierszy
+        
 polaczenie_z_baza_danych.commit()
 polaczenie_z_baza_danych.close()
 
