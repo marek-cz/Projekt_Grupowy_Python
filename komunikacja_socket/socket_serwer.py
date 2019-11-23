@@ -3,6 +3,7 @@
 # PROCES SERWERA
 
 POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA = 703
+TIMEOUT = 10.0
 
 import socket
 import numpy as np
@@ -61,11 +62,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
     connection, address = s.accept()
     print("Adres polaczenia: ", address)
+    
 
     ramka_danych_string = "" # inicjalizacja pustym stringiem
     data = "".encode()
+    warunek_petli = True
 
-    while True:         # ODBIOR DANYCH
+    while warunek_petli:         # ODBIOR DANYCH
         #data = connection.recv(funkcje.BUFOR_ROZMIAR)
         #if not data : break # zakomentowac na probe
         #ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
@@ -73,9 +76,20 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         #while ramka_danych_lista_stringow[-1] != '$' :
         
         while ramka_danych_string.find('$') == -1 :
-            data += connection.recv(funkcje.BUFOR_ROZMIAR)
+            connection.settimeout(TIMEOUT)
+            try : 
+                data += connection.recv(funkcje.BUFOR_ROZMIAR)
+            except socket.timeout:
+                print("Timeout!!! Try again...")
+                warunek_petli = False
+                connection.close()
+                s.shutdown(socket.SHUT_RDWR)
+                s.close()
+                break
             if not data : break # zakomentowac na probe
             ramka_danych_string = data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
+
+        if (not (warunek_petli)) : break
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
         
         if ramka_danych_lista_stringow[-1] != '$':
@@ -102,6 +116,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(ramka_danych_lista_stringow)
             odpowiedz = "Bledna ramka!" + "\n" + ramka_danych_string
             connection.send(odpowiedz.encode())
+
         
 polaczenie_z_baza_danych.commit()
 polaczenie_z_baza_danych.close()
