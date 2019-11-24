@@ -21,7 +21,7 @@ def Klasyfikacja():
         indeks_np = np.where(klasyfikacja == klasyfikacja.max()) # szukamy najbardziej prawdopodobnego wyniku
         indeks = np.asscalar(indeks_np[1])
         # odeslij wynik klasyfikacji
-        odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n" # + str(klasyfikacja) + "\n"
+        odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
         connection.send(odpowiedz.encode())
         print(odpowiedz)
         # wpisz do bazy danych
@@ -63,33 +63,28 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     connection, address = s.accept()
     print("Adres polaczenia: ", address)
     
+    connection.settimeout(TIMEOUT)
 
     ramka_danych_string = "" # inicjalizacja pustym stringiem
     data = "".encode()
     warunek_petli = True
 
     while warunek_petli:         # ODBIOR DANYCH
-        #data = connection.recv(funkcje.BUFOR_ROZMIAR)
-        #if not data : break # zakomentowac na probe
-        #ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
-        #ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
-        #while ramka_danych_lista_stringow[-1] != '$' :
         
         while ramka_danych_string.find('$') == -1 :
-            connection.settimeout(TIMEOUT)
             try : 
                 data += connection.recv(funkcje.BUFOR_ROZMIAR)
             except socket.timeout:
                 print("Timeout!!! Try again...")
                 warunek_petli = False
+                connection.shutdown(socket.SHUT_RDWR)
                 connection.close()
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
                 break
             if not data : break # zakomentowac na probe
             ramka_danych_string = data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
 
-        if (not (warunek_petli)) : break
+        if (not (warunek_petli)) : break # wyjscie po timeoucie
+        
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
         
         if ramka_danych_lista_stringow[-1] != '$':
@@ -105,9 +100,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if ramka_danych_lista_stringow[0] =="END" :
             connection.send("END".encode())
             break
-
-        #if len( ramka_danych_lista_stringow ) != POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli brakuje jakiejs probki...
-            #print("Blad ramki")
         
         if ramka_danych_lista_stringow[0] in slownik_funkcji :
             slownik_funkcji[ramka_danych_lista_stringow[0]]()
