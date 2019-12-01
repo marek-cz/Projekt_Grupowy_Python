@@ -2,6 +2,9 @@
 # KOMUNIKACJA KLIENT - SERWER
 # PROCES SERWERA
 
+POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA = 703
+TIMEOUT = 10.0
+
 import socket
 import numpy as np
 import funkcje_socket_serwer as funkcje # wlasny modul z funkcjami i stalymi
@@ -15,18 +18,18 @@ def Klasyfikacja():
         probka , dane_osie = funkcje.lista_stringow_na_probke_BEZ_NORMALIZACJI(ramka_danych_lista_stringow[2:-1]) # WYSYLAMY DO FUNKCJI TYLKO DANE!!!
         indeks = funkcje.klasyfikacja_odchylenie_std(probka)
         # odeslij wynik klasyfikacji
-        odpowiedz = "Tu serwer, odebralem dane :)\nWykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
+        odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
         connection.send(odpowiedz.encode())
         print(odpowiedz)
         # wpisz do bazy danych
-        kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
-        kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
-        polaczenie_z_baza_danych.commit()
+        #kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
+        #kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
+        #polaczenie_z_baza_danych.commit()
     else:
         print("\n\nDLUGOSC RAMKI SIE NIE ZGADZA\n\n")
         probka , dane_osie = funkcje.lista_stringow_na_probke(ramka_danych_lista_stringow[2:-1],zamien_na_float = False)
-        kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), "BLAD" ,datetime.datetime.now() ) )
-        polaczenie_z_baza_danych.commit()
+        #kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), "BLAD" ,datetime.datetime.now() ) )
+        #polaczenie_z_baza_danych.commit()
 
 def Wpis():
     print("Polecenie wpsiania do bazy danych")
@@ -42,35 +45,42 @@ def Zapytanie():
 slownik_funkcji = {"Klasyfikacja":Klasyfikacja, "Wpis":Wpis, "Zapytanie":Zapytanie}
 
 # polaczenie z baza danych SQLite
-polaczenie_z_baza_danych = sqlite3.connect(funkcje.nazwa_pliku_z_baza_danych)
-kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
+#polaczenie_z_baza_danych = sqlite3.connect(funkcje.nazwa_pliku_z_baza_danych)
+#kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykonujemy operacje na bazie danych
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     # AF_INET - IPv4
     # SOCK_STREAM - TCP
-    
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((funkcje.IP_SERWERA,funkcje.PORT))
     s.listen(1)
 
     connection, address = s.accept()
     print("Adres polaczenia: ", address)
-
+    
+    connection.settimeout(TIMEOUT)
 
     ramka_danych_string = "" # inicjalizacja pustym stringiem
     data = "".encode()
+    warunek_petli = True
 
-    while True:         # ODBIOR DANYCH
-        #data = connection.recv(funkcje.BUFOR_ROZMIAR)
-        #if not data : break # zakomentowac na probe
-        #ramka_danych_string += data.decode() # dane sa odbierane w formacie Byte
-        #ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
-        #while ramka_danych_lista_stringow[-1] != '$' :
+    while warunek_petli:         # ODBIOR DANYCH
         
         while ramka_danych_string.find('$') == -1 :
-            data += connection.recv(funkcje.BUFOR_ROZMIAR)
+            try : 
+                data += connection.recv(funkcje.BUFOR_ROZMIAR)
+            except socket.timeout:
+                print("Timeout!!! Try again...")
+                warunek_petli = False
+                connection.shutdown(socket.SHUT_RDWR)
+                connection.close()
+                break
             if not data : break # zakomentowac na probe
             ramka_danych_string = data.decode() # w kazdej iteracji string sie powieksza, az zbierzemy cala ramke danych
+
+        if (not (warunek_petli)) : break # wyjscie po timeoucie
+        
         ramka_danych_lista_stringow = ramka_danych_string.split() # podzial stringa po DOWOLNYM BIALYM ZNAKU
         
         if ramka_danych_lista_stringow[-1] != '$':
@@ -86,9 +96,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         if ramka_danych_lista_stringow[0] =="END" :
             connection.send("END".encode())
             break
-
-        #if len( ramka_danych_lista_stringow ) != POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli brakuje jakiejs probki...
-            #print("Blad ramki")
         
         if ramka_danych_lista_stringow[0] in slownik_funkcji :
             slownik_funkcji[ramka_danych_lista_stringow[0]]()
@@ -97,8 +104,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(ramka_danych_lista_stringow)
             odpowiedz = "Bledna ramka!" + "\n" + ramka_danych_string
             connection.send(odpowiedz.encode())
+
         
-polaczenie_z_baza_danych.commit()
-polaczenie_z_baza_danych.close()
+#polaczenie_z_baza_danych.commit()
+#polaczenie_z_baza_danych.close()
 
 
