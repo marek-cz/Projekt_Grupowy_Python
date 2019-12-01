@@ -56,7 +56,7 @@ kursor_bazy_danych = polaczenie_z_baza_danych.cursor() # za pomoca kursora wykon
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     # AF_INET - IPv4
     # SOCK_STREAM - TCP
-    
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((funkcje.IP_SERWERA,funkcje.PORT))
     s.listen(1)
 
