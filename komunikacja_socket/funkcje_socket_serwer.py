@@ -159,3 +159,35 @@ def lista_stringow_na_probke_BEZ_NORMALIZACJI(lista_danych):
     return (probka,dane_osie_string)
 
 #####################################################################################
+
+def SPLOTOWA_normalizacja(macierz_probek):
+    for probka in macierz_probek:
+        probka[0] /= ZAKRES_AKCELEROMETR
+        probka[1] /= ZAKRES_AKCELEROMETR
+        probka[2] /= ZAKRES_AKCELEROMETR
+        
+        probka[3] /= ZAKRES_ZYROSKOP
+        probka[4] /= ZAKRES_ZYROSKOP
+        probka[5] /= ZAKRES_ZYROSKOP
+
+#######################################################################################
+
+def SPLOTOWA_lista_stringow_na_probke(lista_danych, zamien_na_float = True):
+    lista_probek_timestamp = lista_stringow_na_liste_probek(lista_danych)
+    lista_probek_timestamp.sort() # sortujemy po Timestamp
+    lista_posortowanych_probek = usun_timestamp(lista_probek_timestamp) # usuwamy timestamp
+    dane_osie_string = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
+
+    if zamien_na_float:
+        probka = np.asarray(lista_posortowanych_probek).astype('float32') # przechodzimy na floaty
+        SPLOTOWA_normalizacja(probka)
+        shape = probka.shape
+        probka = probka.reshape(1,shape[0],shape[1])
+        
+    else :
+        probka = "Blad"
+
+
+    return (probka,dane_osie_string)
+   
+        
