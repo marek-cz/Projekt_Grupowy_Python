@@ -7,7 +7,7 @@ def timestamp_ogarnij(nazwa_pliku_akc, nazwa_pliku_gyr,offset = 4):
         - akcelerometr
         - zyroskop
         w ktorych TIMESTAMP JEST IDENTYCZNY!!!"""
-    with ( open(nazwa_pliku_akc,"r")) as plik_akc_old , open("../przykladowe/"+nazwa_pliku_akc,"w") as plik_akc_new,open("../przykladowe/"+nazwa_pliku_gyr,"w") as plik_gyr_new :
+    with ( open(nazwa_pliku_akc,"r")) as plik_akc_old , open("../dane_Marek/"+nazwa_pliku_akc,"w") as plik_akc_new,open("../dane_Marek/"+nazwa_pliku_gyr,"w") as plik_gyr_new :
         licznik_linii = 0
         for linia in plik_akc_old:
             licznik_linii += 1

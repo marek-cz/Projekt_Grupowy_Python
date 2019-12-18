@@ -16,18 +16,22 @@ import datetime
 ####################################################################################################################################################################
 def Klasyfikacja():
     if len( ramka_danych_lista_stringow ) == POPRAWNA_DLUGOSC_LISTY_STRINGOW_KLASYFIKACJA: # jezeli dlugosc ramki jest OK
-        probka , dane_osie = funkcje.SPLOTOWA_lista_stringow_na_probke(ramka_danych_lista_stringow[2:-1]) # WYSYLAMY DO FUNKCJI TYLKO DANE!!!
-        klasyfikacja = model.predict(probka)
-        indeks_np = np.where(klasyfikacja == klasyfikacja.max()) # szukamy najbardziej prawdopodobnego wyniku
-        indeks = np.asscalar(indeks_np[1])
-        # odeslij wynik klasyfikacji
-        odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
-        connection.send(odpowiedz.encode())
-        print(odpowiedz)
-        # wpisz do bazy danych
-        kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
-        kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
-        polaczenie_z_baza_danych.commit()
+        poprawnosc,probka , dane_osie = funkcje.SPLOTOWA_lista_stringow_na_probke(ramka_danych_lista_stringow[2:-1]) # WYSYLAMY DO FUNKCJI TYLKO DANE!!!
+        if (poprawnosc) :
+            klasyfikacja = model.predict(probka)
+            indeks_np = np.where(klasyfikacja == klasyfikacja.max()) # szukamy najbardziej prawdopodobnego wyniku
+            indeks = np.asscalar(indeks_np[1])
+            # odeslij wynik klasyfikacji
+            odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
+            connection.send(odpowiedz.encode())
+            print(odpowiedz)
+            # wpisz do bazy danych
+            kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), funkcje.wykryta_aktywnosc[indeks] ,datetime.datetime.now() ) )
+            kursor_bazy_danych.execute("insert into aktywnosc (etykieta,czas,zawodnik_id) values(?,?,?)", (funkcje.wykryta_aktywnosc[indeks],datetime.datetime.now(),int(ramka_danych_lista_stringow[1])) )
+            polaczenie_z_baza_danych.commit()
+        else :
+            kursor_bazy_danych.execute("insert into probki (a_x,a_y,a_z,g_x,g_y,g_z, etykieta ,czas) values(?,?,?,?,?,?,?,?)", (" ".join(dane_osie[0]), " ".join(dane_osie[1])," ".join(dane_osie[2]), " ".join(dane_osie[3])," ".join(dane_osie[4])," ".join(dane_osie[5]), "BLAD" ,datetime.datetime.now() ) )
+            polaczenie_z_baza_danych.commit()
     else :
         print("\n\nDLUGOSC RAMKI SIE NIE ZGADZA\n\n")
         probka , dane_osie = funkcje.lista_stringow_na_probke(ramka_danych_lista_stringow[2:-1],zamien_na_float = False)
@@ -74,6 +78,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         while ramka_danych_string.find('$') == -1 :
             try : 
                 data += connection.recv(funkcje.BUFOR_ROZMIAR)
+                #print("Odbior danych\n") # kontrolne wypisanie
             except socket.timeout:
                 print("Timeout!!! Try again...")
                 warunek_petli = False

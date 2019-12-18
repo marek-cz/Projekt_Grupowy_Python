@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras.utils.np_utils import to_categorical
 
-liczba_epok = 25
+liczba_epok = 15
 wymiar_warstw = 16
 liczba_probek_w_paczce = 100
 
@@ -91,6 +91,8 @@ model.add(layers.Dense(2 * wymiar_warstw,activation='relu'))
 model.add(layers.Dense(liczba_kategorii,activation='softmax')) # na kazdym wyjsciu prawdopodobienstwo ze element nalezy do danej klasy
 
 # KOMPILOWANIE MODELU
+
+#input()
 
 model.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'])
 

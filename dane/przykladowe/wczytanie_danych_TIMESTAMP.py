@@ -10,7 +10,7 @@ ZAKRES_ZYROSKOPU     = 2000
 liczba_probek_w_paczce = int(input("Podaj liczbe probek w paczce danych : "))
 ##############################################################################################
 #       ETYKIETY DANYCH :
-slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 ,"Stanie" : 3}
+slownik_etykiet_danych = { "Marsz" : 0, "Trucht" : 1, "Bieg" : 2 ,"Stanie" : 3,"Skok" : 4}
 ################################################################################################
 
 

@@ -81,6 +81,8 @@ def wyznacz_etykiete(etykieta_pliku, slownik_etykiet_danych ):
         return slownik_etykiet_danych["Trucht"]
     elif ( etykieta_pliku.find("Stanie") !=(-1) ):
         return slownik_etykiet_danych["Stanie"]
+    elif ( etykieta_pliku.find("Skok") !=(-1) ):
+        return slownik_etykiet_danych["Skok"]
     else :
         return -1 # blad
 
