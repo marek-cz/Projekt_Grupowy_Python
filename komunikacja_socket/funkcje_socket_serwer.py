@@ -22,7 +22,7 @@ PROGI_ODCHYLENIE_STD = {"Bieganie" : BIEGANIE_PROGI_ODCHYLENIA_STD, "Marsz" : MA
 
 
 
-wykryta_aktywnosc = ["Marsz", "Trucht", "Bieg","Stanie"]
+wykryta_aktywnosc = ["Marsz", "Trucht", "Bieg","Stanie","Skok"]
 nazwa_pliku_z_baza_danych = "plik_bazy_danych.db"
 sciezka_do_modelu_klasyfikatora = "../zapis_modelu.h5"
 
@@ -178,16 +178,23 @@ def SPLOTOWA_lista_stringow_na_probke(lista_danych, zamien_na_float = True):
     lista_posortowanych_probek = usun_timestamp(lista_probek_timestamp) # usuwamy timestamp
     dane_osie_string = wyodrebnij_osie_danych_string(lista_posortowanych_probek) # podzial probek na osie czujnikow - do zapisu
 
+    poprawnosc = True
+    
     if zamien_na_float:
-        probka = np.asarray(lista_posortowanych_probek).astype('float32') # przechodzimy na floaty
-        SPLOTOWA_normalizacja(probka)
-        shape = probka.shape
-        probka = probka.reshape(1,shape[0],shape[1])
+        try :
+            probka = np.asarray(lista_posortowanych_probek).astype('float32') # przechodzimy na floaty
+            SPLOTOWA_normalizacja(probka)
+            shape = probka.shape
+            probka = probka.reshape(1,shape[0],shape[1])
+        except ValueError as zmienna1:
+            print("Blad konwersji  string - float!")
+            probka = 0
+            poprawnosc = False
         
     else :
-        probka = "Blad"
-
-
-    return (probka,dane_osie_string)
+        probka = 0
+        poprawnosc = False
+        
+    return (poprawnosc,probka,dane_osie_string)
    
         
