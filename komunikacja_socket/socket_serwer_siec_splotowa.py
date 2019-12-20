@@ -22,7 +22,8 @@ def Klasyfikacja():
             indeks_np = np.where(klasyfikacja == klasyfikacja.max()) # szukamy najbardziej prawdopodobnego wyniku
             indeks = np.asscalar(indeks_np[1])
             # odeslij wynik klasyfikacji
-            odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
+            #odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
+            odpowiedz = funkcje.wykryta_aktywnosc[indeks]
             connection.send(odpowiedz.encode())
             print(odpowiedz)
             # wpisz do bazy danych
