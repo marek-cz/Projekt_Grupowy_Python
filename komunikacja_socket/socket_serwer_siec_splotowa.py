@@ -23,7 +23,7 @@ def Klasyfikacja():
             indeks = np.asscalar(indeks_np[1])
             # odeslij wynik klasyfikacji
             #odpowiedz = "Wykryta aktywnosc to :  " + funkcje.wykryta_aktywnosc[indeks] + " \n"
-            odpowiedz = funkcje.wykryta_aktywnosc[indeks]
+            odpowiedz = funkcje.wykryta_aktywnosc[indeks] + " \n"
             connection.send(odpowiedz.encode())
             print(odpowiedz)
             # wpisz do bazy danych
